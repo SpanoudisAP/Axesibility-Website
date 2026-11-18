@@ -69,26 +69,26 @@ def home(request):
                     status="pending",
                 )
                        
-            if not request.user.is_authenticated: # Guests can access their scans through their session
-                guest_scan_ids = request.session.get("guest_scan_ids", [])
-                guest_scan_ids.append(scan.id)
-                request.session["guest_scan_ids"] = guest_scan_ids
+                if not request.user.is_authenticated: # Guests can access their scans through their session
+                    guest_scan_ids = request.session.get("guest_scan_ids", [])
+                    guest_scan_ids.append(scan.id)
+                    request.session["guest_scan_ids"] = guest_scan_ids
             
-            try: # runs scanner and saves result
-                scan.status = "running" # scans
-                scan.save(update_fields=["status"])
+                try: # runs scanner and saves result
+                    scan.status = "running" # scans
+                    scan.save(update_fields=["status"])
 
-                results = scan_website(scan.url)
+                    results = scan_website(scan.url)
 
-                scan.results = results # saves results
-                scan.status = "completed"
-                scan.save(update_fields=["results", "status"])
+                    scan.results = results # saves results
+                    scan.status = "completed"
+                    scan.save(update_fields=["results", "status"])
 
-            except ScanError as error: # error 
-                scan.status = "failed"
-                scan.results = {"error": str(error)}
-                scan.save(update_fields=["results", "status"])
-            return redirect("scan_results", scan_id=scan.id)    # redirect to results
+                except ScanError as error: # error 
+                    scan.status = "failed"
+                    scan.results = {"error": str(error)}
+                    scan.save(update_fields=["results", "status"])
+                return redirect("scan_results", scan_id=scan.id)    # redirect to results
 
     else:
         form = WebsiteScanForm()

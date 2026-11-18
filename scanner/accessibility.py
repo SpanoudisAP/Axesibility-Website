@@ -41,10 +41,10 @@ def is_safe_browser_request(url):
             return False
         hostname = hostname.lower().rstrip(".")
 
-        if (
-            hostname == "localhost"
-            or hostname.endswith(".localhost")
-        ):
+        if parsed.username is not None or parsed.password is not None: # rejects embedded usernames or passwords
+            return False
+
+        if (hostname == "localhost" or hostname.endswith(".localhost")):
             return False
         
         port = parsed.port # validate the port.
