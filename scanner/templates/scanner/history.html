@@ -1,0 +1,109 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Scan History | WCAG Scanner</title>
+    <link rel="stylesheet" href="{% static 'scanner/style.css' %}">
+</head>
+
+<body>
+    {% include "scanner/navbar.html" %} <!-- navigation bar-->
+<main id="main-content" tabindex="-1">
+
+    <section aria-labelledby="history-heading">
+        <h1 id="history-heading">My Scan History</h1>
+        <p>Review your previous website accessibility scans and their saved results.</p>
+
+        {% if scans %}
+            <div class="table-container" role="region" aria-label="Scan history table" tabindex="0">
+
+                <table class="history-table">
+                    <caption>Accessibility scans, newest first</caption>
+
+                    <thead>
+                        <tr>
+                            <th scope="col">Website URL</th>
+                            <th scope="col">Scan Date</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Results</th>
+                            <th scope="col">PDF Report</th>
+                            <th scope="col">Progress</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for scan in scans %} <!-- loop creates a table row for every scan -->
+                            <tr>
+                                <td>
+                                    {{ scan.url }}
+                                </td>
+
+                                <td>
+                                    <time datetime="{{ scan.scanned_at|date:'c' }}">
+                                        {{ scan.scanned_at|date:"d M Y, H:i" }} <!-- displays scan date day,month,year,hour,minuets -->
+                                    </time>
+                                </td>
+
+                                <td>
+                                    <span class="scan-status status-{{ scan.status }}">
+                                        {{ scan.get_status_display }} <!-- display scan status -->
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <a href="{% url 'scan_results' scan.id %}" aria-label="View results for {{ scan.url }}"> <!-- saved results-->
+                                        View Results
+                                    </a>
+                                </td>
+
+                                <td>
+                                    {% if scan.status == "completed" %} <!--  ensures PDF link appears only for completed scans.-->
+                                        <a href="{% url 'download_scan_pdf' scan.id %}"
+                                        class="history-download-link"
+                                        aria-label="Download PDF report for {{ scan.url }}">
+                                            Download PDF
+                                        </a>
+                                    {% else %}
+                                        <span class="report-unavailable">
+                                            Not available
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if scan.can_compare %}
+                                        <a href="{% url 'scan_comparison' scan.id %}"
+                                        aria-label="View accessibility progress for {{ scan.url }}">
+                                            View Progress
+                                        </a>
+                                    {% else %}
+                                        <span class="report-unavailable">
+                                            Not available
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+            <div class="empty-history"> <!-- empty history -->
+                <h2>No Scans Yet</h2>
+                <p>You haven't performed any accessibility scans yet.</p>
+                <p><a href="{% url 'home' %}">Start Your First Scan</a></p>
+            </div>
+        {% endif %}
+    </section>
+</main>
+
+<footer>
+    <p>WCAG Accessibility Scanner</p>
+</footer>
+</body>
+</html>

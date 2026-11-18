@@ -1,0 +1,5 @@
+Django>=5.2,<5.3
+playwright
+reportlab>=4.2,<5
+waitress>=3.0,<4
+whitenoise>=6.8,<7

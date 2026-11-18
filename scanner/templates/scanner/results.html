@@ -1,0 +1,202 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Scan Results</title>
+
+    <link rel="stylesheet"
+          href="{% static 'scanner/style.css' %}">
+</head>
+
+<body>
+    {% include "scanner/navbar.html" %} <!-- navigation bar-->
+
+<main id="main-content" tabindex="-1">
+    <section aria-labelledby="scan-heading"> <!-- display scan information -->
+        <h1 id="scan-heading">Scan Information</h1>
+        <p>
+            <strong>Website:</strong>
+            {{ scan.url }}
+        </p>
+        <p>
+            <strong>Date:</strong>
+            {{ scan.scanned_at|date:"d M Y, H:i" }}
+        </p>
+        <p>
+            <strong>Status:</strong>
+            {{ scan.get_status_display }}
+        </p>
+    </section>
+
+    {% if scan.status == "completed" %} <!-- display summary -->
+
+        <section class="report-actions" aria-label="Report download">
+            <a href="{% url 'download_scan_pdf' scan.id %}"
+               class="download-pdf-button">
+                Download PDF Report 
+            </a>
+        </section>
+        
+        <section aria-labelledby="summary-heading">
+            <h2 id="summary-heading"> Accessibility Summary </h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card card-red"> <!-- RED: Immediate Attention -->
+                    <h3> Immediate Attention </h3>
+                    <p class="dashboard-number">
+                        {{ summary.critical|default:0 }} critical /
+                        {{ summary.serious|default:0 }} serious
+                    </p>
+                    <p> Critical and serious issues </p>
+                </div>
+                <div class="dashboard-card card-orange"> <!-- ORANGE: Needs Fixing -->
+                    <h3> Needs Fixing </h3>
+                    <p class="dashboard-number">
+                        {{ summary.moderate|default:0 }}
+                    </p>
+                    <p> Moderate accessibility issues </p>
+                </div>
+                <div class="dashboard-card card-yellow"> <!-- YELLOW: Recommended Review -->
+                    <h3> Recommended Review </h3>
+                    <p class="dashboard-number">
+                        {{ summary.minor|default:0 }}
+                    </p>
+                    <p> Minor accessibility issues </p>
+                    <p>
+                        Manual review checks:
+                        {{ summary.manual_review|default:0 }}
+                    </p>
+                </div>
+                <div class="dashboard-card card-green"> <!-- GREEN: Passed Checks -->
+                    <h3> Passed Checks </h3>
+                    <p class="dashboard-number">
+                        {{ summary.passed|default:0 }}
+                    </p>
+                    <p> Automated checks passed </p>
+                </div>
+            </div>
+
+            <p class="dashboard-note">
+                These results are based on automated accessibility
+                checks. Passing checks does not guarantee full
+                WCAG 2.2 compliance. Manual testing is also required.
+            </p>
+        </section>
+
+        <section aria-labelledby="violations-heading">
+            <h2 id="violations-heading"> Detected Accessibility Issues </h2>
+            {% if violations %}
+                <div class="violations-list">
+                    {% for violation in violations %}
+
+                        <article class="violation-card severity-{{ violation.impact|default:'unknown' }}">
+                            <header class="violation-header">
+                                <h3>{{ violation.help }}</h3>
+                                <p>
+                                    <strong>Severity:</strong>
+                                    {% if violation.impact == "critical" %}
+                                        Critical — Immediate Attention
+                                    {% elif violation.impact == "serious" %}
+                                        Serious — Immediate Attention
+                                    {% elif violation.impact == "moderate" %}
+                                        Moderate — Needs Fixing
+                                    {% elif violation.impact == "minor" %}
+                                        Minor — Recommended Fix
+                                    {% else %}
+                                        Not Classified
+                                    {% endif %}
+                                </p>
+                            </header>
+
+                            <p>{{ violation.description }}</p>
+                            <p>
+                                <strong>Affected elements:</strong>
+                                {{ violation.nodes|length }}
+                            </p>
+
+                            <details class="violation-details">
+                                <summary> View affected elements and fixes for {{ violation.help }}</summary>
+                                {% for node in violation.nodes %}
+                                    <div class="affected-element">
+                                        <h4> Affected Element {{ forloop.counter }} </h4>
+                                        <p> <strong>CSS Selector:</strong> </p>
+                                        <code>
+                                            {{ node.target|join:", " }}
+                                        </code>
+                                        <p> <strong>Suggested Fix:</strong> </p>
+                                        <p> {{ node.failure_summary|default:"Review this element against the accessibility requirement."|linebreaksbr }} </p>
+                                    </div>
+                                {% empty %}
+                                    <p> No individual elements were reported. </p>
+                                {% endfor %}
+                            </details>
+
+                            <p>
+                                <a href="{{ violation.help_url }}"
+                                target="_blank"
+                                rel="noopener noreferrer">
+                                    Learn how to fix this issue
+                                    (opens in a new tab)
+                                </a>
+                            </p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>
+                    No violations were detected by the
+                    automated accessibility checks.
+                    This does not guarantee full WCAG 2.2 compliance.
+                </p>
+            {% endif %}
+        </section>
+
+        <section aria-labelledby="review-heading"> <!-- -->
+            <h2 id="review-heading">
+                Checks Requiring Manual Review
+            </h2>
+            {% if incomplete %}
+                <ul>
+                    {% for item in incomplete %}
+                        <li>
+                            {{ item.help }}
+                            — {{ item.nodes_count }}
+                            element(s)
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>
+                    No inconclusive checks were reported
+                    by the automated scanner.
+                </p>
+            {% endif %}
+        </section>
+
+    {% elif scan.status == "failed" %} <!-- failed scans -->
+        <section aria-labelledby="error-heading">
+            <h2 id="error-heading">Scan Failed</h2>
+            <p role="alert">
+                {{ scan.results.error|default:"The scan could not be completed." }}
+            </p>
+        </section>
+
+    {% else %}
+        <section aria-labelledby="progress-heading">
+            <h2 id="progress-heading">Scan Not Completed</h2>
+            <p role="status">
+                This scan is currently
+                {{ scan.get_status_display|lower }}.
+            </p>
+        </section>
+    {% endif %}
+</main>
+
+<footer>
+    <p> WCAG Accessibility Scanneer </p>
+</footer>
+</body>
+</html>

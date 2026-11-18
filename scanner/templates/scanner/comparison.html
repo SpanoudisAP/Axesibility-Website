@@ -1,0 +1,265 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility Progress | Axesibility</title>
+    <link rel="stylesheet" href="{% static 'scanner/style.css' %}">
+</head>
+
+<body>
+{% include "scanner/navbar.html" %}
+
+    <main id="main-content"
+          tabindex="-1"
+          class="comparison-container">
+        <h1>Website Accessibility Progress</h1>
+
+        <p> Compare accessibility scans of the same webpage across different dates. </p>
+        <p> <strong>Website:</strong> {{ base_scan.url }} </p> <!-- display website and scan information-->
+        <p> <a href="{% url 'scan_history' %}">Back to Scan History</a> </p>
+
+        <section class="comparison-section" aria-labelledby="progress-heading">
+            <h2 id="progress-heading"> Accessibility Progress Over Time </h2>
+            <p>Completed scans: <strong>{{ matching_scans|length }}</strong></p>
+
+            {% if chart_data|length >= 2 %}
+                <p> The chart displays the number of detected findings by severity across your saved scans.</p>
+
+                <div class="comparison-legend" aria-label="Chart legend">
+                    <span class="legend-item">
+                        <span class="legend-color" style="background:#b91c1c"></span>
+                        Critical
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background:#c2410c"></span>
+                        Serious
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background:#a16207"></span>
+                        Moderate
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color" style="background:#2563eb"></span>
+                        Minor
+                    </span>
+                </div>
+
+                <svg id="progress-chart"
+                     class="comparison-chart"
+                     viewBox="0 0 800 340"
+                     role="img"
+                     aria-labelledby="chart-title chart-description">
+
+                    <title id="chart-title"> Accessibility findings over time </title>
+
+                    <desc id="chart-description">
+                        Line chart showing the number of critical, serious, moderate, and minor accessibility findings across
+                        {{ matching_scans|length }} completed scans, ordered from oldest to newest.
+
+                        Lower values indicate fewer detected findings.
+                        Exact values for every scan are provided in the Scan History Data table below.
+                    </desc>
+                </svg>
+                <p class="chart-data-link"> 
+                    Prefer the exact numbers? 
+                    <a href="#data-heading"> View the Scan History Data table </a>.
+                </p>
+
+            {% else %}
+                <p> At least two completed scans of the same webpage are needed to display progress.</p>
+            {% endif %}
+
+        </section>
+
+        <section class="comparison-section" aria-labelledby="data-heading">
+            <h2 id="data-heading"> Scan History Data</h2>
+            <div class="table-container" role="region" aria-label="Accessibility progress data" tabindex="0">
+                <table class="comparison-table">
+                    <caption> Detected findings for each scan</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Critical</th>
+                            <th scope="col">Serious</th>
+                            <th scope="col">Moderate</th>
+                            <th scope="col">Minor</th>
+                            <th scope="col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in chart_data %}
+                        <tr>
+                            <th scope="row">{{ item.date }}</th>
+                            <td>{{ item.critical }}</td>
+                            <td>{{ item.serious }}</td>
+                            <td>{{ item.moderate }}</td>
+                            <td>{{ item.minor }}</td>
+                            <td>{{ item.total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                No completed scans available.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="comparison-section" aria-labelledby="select-heading">
+            <h2 id="select-heading"> Compare Two Scans </h2>
+            {% if matching_scans|length >= 2 %}
+                <form method="get" class="comparison-form">
+                    <div class="comparison-field">
+                        <label for="first-scan"> Older Scan </label>
+
+                        <select id="first-scan"
+                                name="first"
+                                required>
+
+                            {% for scan in matching_scans %}
+                            <option value="{{ scan.id }}"
+                                {% if first_scan.id == scan.id %}
+                                    selected
+                                {% endif %}>
+                                {{ scan.scanned_at|date:"d M Y, H:i" }}
+                                (Scan #{{ scan.id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="comparison-field">
+                        <label for="second-scan"> Newer Scan </label>
+                        <select id="second-scan"
+                                name="second"
+                                required>
+
+                            {% for scan in matching_scans %}
+                            <option value="{{ scan.id }}"
+                                {% if second_scan.id == scan.id %}
+                                    selected
+                                {% endif %}>
+                                {{ scan.scanned_at|date:"d M Y, H:i" }}
+                                (Scan #{{ scan.id }})
+                            </option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+
+                    <button type="submit">
+                        Compare Scans
+                    </button>
+                </form>
+
+                {% if selection_error %}
+                    <p class="comparison-error"
+                       role="alert">
+                        {{ selection_error }}
+                    </p>
+                {% endif %}
+
+            {% else %}
+                <p> Perform another scan of this webpage to enable comparison.</p>
+            {% endif %}
+        </section>
+
+        {% if comparison %}
+
+        <section class="comparison-section"
+                 aria-labelledby="results-heading">
+
+            <h2 id="results-heading">Comparison Results </h2>
+            <p>
+                Comparing
+                <strong>
+                    {{ first_scan.scanned_at|date:"d M Y, H:i" }}
+                </strong>
+                with
+                <strong>
+                    {{ second_scan.scanned_at|date:"d M Y, H:i" }}
+                </strong>.
+            </p>
+
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    Older Scan
+                    <strong>{{ comparison.before_total }}</strong>
+                    detected findings
+                </div>
+                <div class="comparison-card">
+                    Newer Scan
+                    <strong>{{ comparison.after_total }}</strong>
+                    detected findings
+                </div>
+                <div class="comparison-card">
+                    Net Change
+                    <strong>{{ comparison.difference }}</strong>
+                    {{ comparison.trend }}
+                </div>
+            </div>
+
+            <h3>Severity Breakdown</h3>
+
+            <div class="table-container"
+                 role="region"
+                 aria-label="Comparison breakdown"
+                 tabindex="0">
+
+                <table class="comparison-table">
+                    <caption>
+                        Changes in detected findings between selected scans
+                    </caption>
+
+                    <thead>
+                        <tr>
+                            <th scope="col">Severity</th>
+                            <th scope="col">Older</th>
+                            <th scope="col">Newer</th>
+                            <th scope="col">Change</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for severity, item in comparison.categories.items %}
+                        <tr>
+                            <th scope="row"> {{ severity|title }} </th>
+                            <td>{{ item.before }}</td>
+                            <td>{{ item.after }}</td>
+                            <td>{{ item.difference }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="comparison-note">
+                <strong>Interpretation:</strong>
+                {{ comparison.trend }}.
+                Negative changes indicate fewer detected findings, 
+                while positive changes indicate more findings.
+            </p>
+
+        </section>
+
+        {% endif %}
+        <p>
+            <strong>Important:</strong>
+            These results show trends in automated accessibility findings.
+            Fewer findings do not guarantee full WCAG 2.2 compliance.
+            Changes to page content or scanning conditions can affect the results.
+        </p>
+    </main>
+
+    <footer><p>WCAG 2.2 Accessibility Scanner</p></footer>
+
+{{ chart_data|json_script:"comparison-chart-data" }}
+<script src="{% static 'scanner/comparison.js' %}" defer></script>
+</body>
+</html>

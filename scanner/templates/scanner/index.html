@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'scanner/style.css' %}">
+    <title>WCAG 2.2 Accessibility Scanner</title>
+</head>
+
+<body>
+    {% include "scanner/navbar.html" %} <!-- navigation bar -->
+    <main id="main-content" tabindex="-1">
+        <section aria-labelledby="scanner-heading">
+            <h1 id="scanner-heading">Website Accessibility Scanner</h1>
+            <p> Scan a website for accessibility issues using WCAG 2.2 guidelines.</p>
+
+            <form method="post"> <!-- sends the form data to django -->
+                {% csrf_token %} <!-- CSRF protection -->
+                {% if form.non_field_errors %} <!-- ensures error appears only when there are errors-->
+                    <div class="form-error" role="alert">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <label for="{{ form.url.id_for_label }}">  <!-- displays the URL field -->
+                    {{ form.url.label }}
+                </label>
+                
+                {{ form.url }}
+
+                {% for error in form.url.errors %} <!-- displays any URL validation errors -->
+                    <p class="form-error">{{ error }}</p>
+                {% endfor %}
+
+                <button type="submit"> Scan Website</button>
+            </form>
+
+            {% if message %}  <!-- displays confirmation message when one is provided. -->
+                <p id="message" role="status">{{ message }}</p>
+            {% endif %}
+        </section>
+
+        <section aria-labelledby="recent-scans-heading">
+            <h2 id="recent-scans-heading">Recent Scans</h2>
+            {% if scans %}
+                <ul class="scan-list">
+                    {% for scan in scans %}
+                        <li class="scan-item">
+                            <p>
+                                <strong>Website:</strong>
+                                {{ scan.url }}
+                            </p>
+                            <p>
+                                <strong>Date:</strong>
+                                {{ scan.scanned_at|date:"d M Y, H:i" }}
+                            </p>
+                            <p>
+                                <strong>Status:</strong>
+                                {{ scan.get_status_display }}
+                            </p>
+                            <a href="{% url 'scan_results' scan.id %}"
+                            aria-label="View results for {{ scan.url }}">
+                                View Results
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                {% if user.is_authenticated %}
+                    <p>You have no saved scans yet.</p>
+                {% else %}
+                    <p>Log in to save scans to your history. You can still scan websites as a guest.</p>
+                {% endif %}
+            {% endif %}
+        </section> 
+    </main>
+
+    <footer>
+        <p>WCAG 2.2 Accessibility Scanner</p>
+    </footer>
+
+</body>
+</html>
