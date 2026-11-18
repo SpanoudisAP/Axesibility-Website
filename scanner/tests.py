@@ -744,3 +744,25 @@ class ScanComparisonTests(TestCase):
         self.assertTrue(scans[self.new_scan.id].can_compare)
         self.assertFalse(scans[self.other_site_scan.id].can_compare)  # only one scan exists for example.org
         self.assertNotIn(self.other_user_scan.id, scans)  # another user's scan must not appear
+
+class ScanRateLimitTests(TestCase):
+
+    @patch("scanner.views.scan_rate_limit_exceeded")
+    @patch("scanner.views.scan_website")
+    def test_rate_limit_prevents_scan_creation(
+        self,
+        mock_scan_website,
+        mock_rate_limit,
+    ):
+        
+        mock_rate_limit.return_value = True # Simulate a user who has reached the scan limit
+
+        response = self.client.post(
+            reverse("home"),
+            {"url": "https://example.com"},
+        )
+        self.assertEqual(response.status_code, 200) # homepage should display the error
+        self.assertContains(response, "You have reached the scan limit.")
+        self.assertEqual(Scan.objects.count(), 0) # no scan created
+        mock_scan_website.assert_not_called() # accessibility scanner must not run
+        mock_rate_limit.assert_called_once() # rate limit check must have been performed

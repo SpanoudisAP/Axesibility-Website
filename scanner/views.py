@@ -72,7 +72,7 @@ def home(request):
             if not request.user.is_authenticated: # Guests can access their scans through their session
                 guest_scan_ids = request.session.get("guest_scan_ids", [])
                 guest_scan_ids.append(scan.id)
-                request.session["guest_scan_ids"] = (guest_scan_ids)
+                request.session["guest_scan_ids"] = guest_scan_ids
             
             try: # runs scanner and saves result
                 scan.status = "running" # scans
