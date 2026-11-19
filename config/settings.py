@@ -165,5 +165,7 @@ X_FRAME_OPTIONS = "DENY"
 
 SECURE_SSL_REDIRECT = (
     not DEBUG
-    and os.environ.get("DJANGO_DISABLE_SSL_REDIRECT") != "True"
+    and os.environ.get(
+        "DJANGO_DISABLE_SSL_REDIRECT", "False"
+    ).lower() != "true"
 )
