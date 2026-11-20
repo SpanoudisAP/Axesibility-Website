@@ -114,7 +114,7 @@
         <section class="comparison-section" aria-labelledby="select-heading">
             <h2 id="select-heading"> Compare Two Scans </h2>
             {% if matching_scans|length >= 2 %}
-                <form method="get" class="comparison-form">
+                <form method="get" action="#results-heading" class="comparison-form">
                     <div class="comparison-field">
                         <label for="first-scan"> Older Scan </label>
 
@@ -175,7 +175,7 @@
         <section class="comparison-section"
                  aria-labelledby="results-heading">
 
-            <h2 id="results-heading">Comparison Results </h2>
+            <h2 id="results-heading" tabindex="-1">Comparison Results </h2>
             <p>
                 Comparing
                 <strong>
