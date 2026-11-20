@@ -13,7 +13,7 @@
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const series = [
-        { key: "critical", color: "#b91c1c" },
+        { key: "critical", color: "#e21212" },
         { key: "serious", color: "#c2410c" },
         { key: "moderate", color: "#a16207" },
         { key: "minor", color: "#2563eb" }

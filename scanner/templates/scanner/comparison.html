@@ -112,9 +112,9 @@
         </section>
 
         <section class="comparison-section" aria-labelledby="select-heading">
-            <h2 id="select-heading"> Compare Two Scans </h2>
+            <h2 id="select-heading" tabindex="-1"> Compare Two Scans </h2>
             {% if matching_scans|length >= 2 %}
-                <form method="get" action="#results-heading" class="comparison-form">
+                <form method="get" class="comparison-form">
                     <div class="comparison-field">
                         <label for="first-scan"> Older Scan </label>
 
@@ -159,10 +159,7 @@
                 </form>
 
                 {% if selection_error %}
-                    <p class="comparison-error"
-                       role="alert">
-                        {{ selection_error }}
-                    </p>
+                    <p class="comparison-error" id="comparison-error" role="alert" tabindex="-1"> {{ selection_error }} </p>
                 {% endif %}
 
             {% else %}
@@ -172,9 +169,7 @@
 
         {% if comparison %}
 
-        <section class="comparison-section"
-                 aria-labelledby="results-heading">
-
+        <section class="comparison-section" aria-labelledby="results-heading">
             <h2 id="results-heading" tabindex="-1">Comparison Results </h2>
             <p>
                 Comparing
@@ -213,9 +208,7 @@
                  tabindex="0">
 
                 <table class="comparison-table">
-                    <caption>
-                        Changes in detected findings between selected scans
-                    </caption>
+                    <caption> Changes in detected findings between selected scans </caption>
 
                     <thead>
                         <tr>
@@ -258,6 +251,16 @@
     </main>
 
     <footer><p>WCAG 2.2 Accessibility Scanner</p></footer>
+
+    {% if selection_error %}
+        <script>
+            window.location.replace("#select-heading");
+        </script>
+    {% elif comparison %}
+        <script>
+            window.location.replace("#results-heading");
+        </script>
+    {% endif %}
 
 {{ chart_data|json_script:"comparison-chart-data" }}
 <script src="{% static 'scanner/comparison.js' %}" defer></script>
